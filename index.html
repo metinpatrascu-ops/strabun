@@ -118,17 +118,20 @@
         <section id="loginView" class="card login-card">
             <p class="eyebrow">Private workspace</p>
             <h2>Conectează-te</h2>
-            <p>Accesul este disponibil numai conturilor autorizate.</p>
+            <p>Conectează-te cu parola contului autorizat. Numai adresele aprobate pot trimite mesaje.</p>
             <form id="loginForm">
                 <div class="field">
                     <label for="loginEmail">E-mail</label>
-                    <input id="loginEmail" type="email" autocomplete="username" required>
+                    <input id="loginEmail" type="email" autocomplete="email" required>
                 </div>
                 <div class="field" style="margin-top:15px">
                     <label for="loginPassword">Parolă</label>
                     <input id="loginPassword" type="password" autocomplete="current-password" required>
                 </div>
-                <div class="form-actions"><span></span><button class="primary" type="submit">Intră în cont</button></div>
+                <div class="form-actions">
+                    <button id="resetPasswordButton" class="secondary" type="button">Resetează parola</button>
+                    <button class="primary" type="submit">Conectează-te</button>
+                </div>
                 <div id="loginNotice" class="notice" role="status"></div>
             </form>
         </section>
@@ -218,7 +221,7 @@
     </main>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
 
         const firebaseConfig = {
@@ -271,9 +274,28 @@
             event.preventDefault();
             clearNotice(byId("loginNotice"));
             try {
-                await signInWithEmailAndPassword(auth, byId("loginEmail").value.trim(), byId("loginPassword").value);
+                await signInWithEmailAndPassword(
+                    auth,
+                    byId("loginEmail").value.trim(),
+                    byId("loginPassword").value
+                );
             } catch {
-                setNotice(byId("loginNotice"), "Autentificare nereușită. Verifică datele și accesul contului.");
+                setNotice(byId("loginNotice"), "Conectarea nu a reușit. Verifică adresa, parola și verificarea e-mailului.");
+            }
+        });
+
+        byId("resetPasswordButton").addEventListener("click", async () => {
+            clearNotice(byId("loginNotice"));
+            const email = byId("loginEmail").value.trim();
+            if (!email) {
+                setNotice(byId("loginNotice"), "Introdu adresa de e-mail pentru a primi instrucțiunile de resetare.");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                setNotice(byId("loginNotice"), "Dacă există un cont pentru această adresă, vei primi instrucțiuni de resetare.", "success");
+            } catch {
+                setNotice(byId("loginNotice"), "Nu am putut trimite instrucțiunile. Verifică adresa și încearcă din nou.");
             }
         });
 
@@ -369,7 +391,13 @@
                     ? "Contul nu este autorizat să trimită e-mailuri."
                     : error.code === "functions/unauthenticated"
                         ? "Sesiunea a expirat. Conectează-te din nou."
-                        : error.message || "Trimiterea nu a reușit. Încearcă din nou.";
+                        : error.code === "functions/failed-precondition"
+                            ? "Serviciul de e-mail nu este configurat corect. Contactează administratorul."
+                            : error.code === "functions/unavailable"
+                                ? "Serviciul de e-mail nu este disponibil momentan. Încearcă din nou."
+                                : error.code === "functions/internal"
+                                    ? "Serverul nu a putut trimite e-mailul. Verifică setările serviciului și încearcă din nou."
+                                    : error.message || "Trimiterea nu a reușit. Încearcă din nou.";
                 setNotice(byId("sendNotice"), message);
             } finally {
                 sending = false;
