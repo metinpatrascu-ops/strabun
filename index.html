@@ -134,6 +134,7 @@
             transition: background .18s, transform .18s;
         }
         .send-button:hover { background: var(--accent-dark); transform: translateY(-1px); }
+        .send-button:disabled { cursor: wait; opacity: .7; transform: none; }
         .send-button svg { width: 15px; height: 15px; }
         .preview-panel { overflow: hidden; }
         .preview-top { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px; border-bottom: 1px solid #eeeeea; }
@@ -249,7 +250,7 @@
                                 </div>
                                 <div class="verified" title="Adresa de expediere este configurată de serviciu">
                                     <svg class="verified-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
-                                    <div class="verified-copy"><div class="verified-address">adresă-verificată@serviciu.ro</div><div class="verified-caption">Adresă de expediere verificată</div></div>
+                                    <div class="verified-copy"><div class="verified-address">Expeditor verificat</div><div class="verified-caption">Configurat în Firebase</div></div>
                                 </div>
                             </div>
                             <div class="hint">Destinatarul va vedea întâi numele ales de tine. E-mailul este trimis numai printr-o adresă verificată.</div>
@@ -279,7 +280,7 @@
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
                                     Adaugă siglă
                                 </label>
-                                <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                                <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp">
                                 <span id="logoName">Opțional</span>
                             </div>
                         </div>
@@ -287,7 +288,7 @@
                         <div class="compose-footer">
                             <div class="delivery-note">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                                <span>Previzualizarea este disponibilă. Trimiterea reală necesită conectarea unui serviciu de e-mail.</span>
+                                <span>E-mailurile sunt trimise de pe adresa verificată configurată în Resend.</span>
                             </div>
                             <button class="send-button" type="submit">
                                 Pregătește e-mailul
@@ -323,13 +324,33 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-functions-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script>
         const senderName = document.getElementById("senderName");
         const subject = document.getElementById("subject");
         const message = document.getElementById("message");
         const emailCard = document.getElementById("emailCard");
         const toast = document.getElementById("toast");
+        const submitButton = document.querySelector(".send-button");
+        let selectedTheme = "green";
+        let logoDataUrl = "";
+        let firebaseReady = false;
         let toastTimer;
+
+        const firebaseSettings = window.emailAppConfig;
+        if (firebaseSettings && !JSON.stringify(firebaseSettings).includes("PASTE_")) {
+            try {
+                firebase.initializeApp(firebaseSettings.firebase);
+                firebase.appCheck().activate(firebaseSettings.recaptchaSiteKey, true);
+                firebaseReady = true;
+            } catch (error) {
+                console.error("Firebase could not be initialized.", error);
+            }
+        }
 
         function updatePreview() {
             const name = senderName.value.trim() || "Numele meu";
@@ -350,6 +371,7 @@
                 });
                 button.classList.add("selected");
                 button.setAttribute("aria-pressed", "true");
+                selectedTheme = button.dataset.theme;
                 emailCard.className = `email-card${button.dataset.theme === "green" ? "" : ` theme-${button.dataset.theme}`}`;
             });
         });
@@ -373,6 +395,7 @@
             }
             const reader = new FileReader();
             reader.addEventListener("load", () => {
+                logoDataUrl = reader.result;
                 const logo = document.getElementById("emailLogo");
                 logo.replaceChildren();
                 const image = document.createElement("img");
@@ -381,6 +404,7 @@
                 logo.append(image);
                 document.getElementById("logoName").textContent = file.name;
             });
+            reader.addEventListener("error", () => showToast("Sigla nu a putut fi citită."));
             reader.readAsDataURL(file);
         });
 
@@ -391,10 +415,36 @@
             toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 4500);
         }
 
-        document.getElementById("emailForm").addEventListener("submit", (event) => {
+        document.getElementById("emailForm").addEventListener("submit", async (event) => {
             event.preventDefault();
             if (!event.currentTarget.reportValidity()) return;
-            showToast("Mesajul este pregătit. Pentru expediere, conectează un serviciu de e-mail și o adresă de expeditor verificată.");
+            if (!firebaseReady) {
+                showToast("Completează configurarea Firebase din firebase-config.js înainte de trimitere.");
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.setAttribute("aria-busy", "true");
+            try {
+                if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+                const sendEmail = firebase.app().functions("europe-west1").httpsCallable("sendEmail");
+                await sendEmail({
+                    recipient: document.getElementById("recipient").value,
+                    senderName: senderName.value,
+                    subject: subject.value,
+                    message: message.value,
+                    theme: selectedTheme,
+                    showStamp: document.getElementById("stampToggle").getAttribute("aria-pressed") === "true",
+                    logo: logoDataUrl,
+                });
+                showToast("E-mailul a fost trimis.");
+            } catch (error) {
+                console.error("Email send failed.", error);
+                showToast(error.message || "E-mailul nu a putut fi trimis. Încearcă din nou.");
+            } finally {
+                submitButton.disabled = false;
+                submitButton.removeAttribute("aria-busy");
+            }
         });
 
         updatePreview();
