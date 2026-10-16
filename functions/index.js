@@ -12,7 +12,9 @@ initializeApp({
 
 const resendApiKey = defineSecret("RESEND_API_KEY");
 const allowedSenderEmails = defineString("SENDER_ALLOWED_EMAILS");
-const verifiedFromAddress = defineString("RESEND_FROM_EMAIL");
+const verifiedFromAddress = defineString("RESEND_FROM_EMAIL", {
+  default: "contact@gemeenteecht-susteren.com",
+});
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function assertAuthorizedSender(request) {
