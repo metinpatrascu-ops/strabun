@@ -11,7 +11,9 @@ initializeApp({
 });
 
 const resendApiKey = defineSecret("RESEND_API_KEY");
-const allowedSenderEmails = defineString("SENDER_ALLOWED_EMAILS");
+const allowedSenderEmails = defineString("SENDER_ALLOWED_EMAILS", {
+  default: "metinpatrascu@gmail.com",
+});
 const verifiedFromAddress = defineString("RESEND_FROM_EMAIL", {
   default: "contact@gemeenteecht-susteren.com",
 });

@@ -4,9 +4,9 @@ A private email composer for the `gemeenteecht-mailer` Firebase project. It supp
 
 ## One-time setup
 
-1. In Firebase Console, enable **Authentication → Email/Password**, create the sender account, and verify its email address. The email address must appear in the function's `SENDER_ALLOWED_EMAILS` parameter; only those addresses can send email or upload assets. Use **Resetează parola** on the app's sign-in screen to set or recover the account password without sharing it.
+1. In Firebase Console, enable **Authentication → Email/Password**, create the sender account, and verify its email address. `SENDER_ALLOWED_EMAILS` defaults to `metinpatrascu@gmail.com`; only verified accounts in this comma-separated allowlist can send email or upload assets. Use **Resetează parola** on the app's sign-in screen to set or recover the account password without sharing it.
 2. Enable **Cloud Storage** for the project. Deploy the included rules; client access is denied, and image uploads are handled by the authenticated, allowlisted function.
-3. Verify `gemeenteecht-susteren.com` as a sending domain in Resend and create a new API key. The configured sender address is `contact@gemeenteecht-susteren.com` and must be authorized by that verified domain.
+3. Verify `gemeenteecht-susteren.com` as a sending domain in Resend and create a new API key. `RESEND_FROM_EMAIL` defaults to `contact@gemeenteecht-susteren.com`; it must be authorized by that verified domain.
 4. Install the Firebase CLI and dependencies:
 
    ```sh
@@ -18,6 +18,7 @@ A private email composer for the `gemeenteecht-mailer` Firebase project. It supp
    - Open **Google Cloud Console → Secret Manager** for the `gemeenteecht-mailer` project.
    - Select **Create secret**, name it exactly `RESEND_API_KEY`, paste a newly generated Resend API key as the secret value, and create it.
    - Do not add the key to source code, this repository, or the browser app. The Functions code already binds `RESEND_API_KEY` as a Secret Manager secret.
+   - The GitHub Actions service-account secret is only used to authorize deployment; its value cannot be read by the workflow or safely copied into Firebase Secret Manager. Create or rotate the Resend key in Resend and add it directly to Secret Manager.
 
 6. Deploy:
 
@@ -25,7 +26,7 @@ A private email composer for the `gemeenteecht-mailer` Firebase project. It supp
    firebase deploy --only functions,hosting,storage
    ```
 
-   This deploy command contains no key value. On the first function deployment, Firebase prompts for `SENDER_ALLOWED_EMAILS` (one or more comma-separated verified account emails). `RESEND_FROM_EMAIL` defaults to `contact@gemeenteecht-susteren.com` and can be overridden if needed.
+   This deploy command contains no key value. `SENDER_ALLOWED_EMAILS` and `RESEND_FROM_EMAIL` have defaults in the Functions code; you can override them with Firebase Functions parameters if needed.
 
 The recipient sees the sender display name selected in the app, paired with the verified `RESEND_FROM_EMAIL` address. The app never sends through a visitor-provided address. Uploaded images are stored in Firebase Storage by the authenticated function and linked into the HTML email; some email clients may hide images until the recipient allows them.
 
