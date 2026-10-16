@@ -220,7 +220,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBKR_9TJ3_DeT1NCAkDPo--hRlD2pImZ5E",
@@ -233,10 +232,17 @@
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const storage = getStorage(app);
-        const sendEmail = httpsCallable(getFunctions(app, "us-central1"), "sendEmail");
+        const functions = getFunctions(app, "us-central1");
+        const sendEmail = httpsCallable(functions, "sendEmail");
+        const saveEmailAsset = httpsCallable(functions, "saveEmailAsset");
         const assetUrls = { background: "", logo: "", stamp: "" };
         const byId = (id) => document.getElementById(id);
+        let uploadsInProgress = 0;
+        let sending = false;
+
+        function syncSendButton() {
+            byId("sendButton").disabled = sending || uploadsInProgress > 0;
+        }
 
         function setNotice(element, message, type = "error") {
             element.textContent = message;
@@ -280,17 +286,26 @@
                 status.textContent = "Fișier invalid. Folosește PNG, JPG sau WebP de maximum 5 MB.";
                 return;
             }
+            uploadsInProgress += 1;
+            syncSendButton();
             status.textContent = "Se încarcă…";
             try {
-                const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
-                const fileRef = ref(storage, `email-assets/${auth.currentUser.uid}/${kind}-${crypto.randomUUID()}.${extension}`);
-                await uploadBytes(fileRef, file, { contentType: file.type });
-                assetUrls[kind] = await getDownloadURL(fileRef);
+                const encodedFile = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+                    reader.onerror = () => reject(new Error("File could not be read."));
+                    reader.readAsDataURL(file);
+                });
+                const result = await saveEmailAsset({ kind, contentType: file.type, content: encodedFile });
+                assetUrls[kind] = result.data.url;
                 status.textContent = `Încărcat: ${file.name}`;
                 updatePreview();
             } catch {
                 assetUrls[kind] = "";
-                status.textContent = "Încărcarea a eșuat. Verifică accesul la Firebase Storage.";
+                status.textContent = "Încărcarea a eșuat. Verifică accesul contului și Firebase Storage.";
+            } finally {
+                uploadsInProgress -= 1;
+                syncSendButton();
             }
         }
 
@@ -328,9 +343,13 @@
         byId("emailForm").addEventListener("submit", async (event) => {
             event.preventDefault();
             clearNotice(byId("sendNotice"));
-            const button = byId("sendButton");
-            button.disabled = true;
-            button.textContent = "Se trimite…";
+            if (uploadsInProgress > 0) {
+                setNotice(byId("sendNotice"), "Așteaptă finalizarea încărcării imaginilor.");
+                return;
+            }
+            sending = true;
+            syncSendButton();
+            byId("sendButton").textContent = "Se trimite…";
             try {
                 const result = await sendEmail({
                     to: byId("recipient").value.trim(),
@@ -353,8 +372,9 @@
                         : error.message || "Trimiterea nu a reușit. Încearcă din nou.";
                 setNotice(byId("sendNotice"), message);
             } finally {
-                button.disabled = false;
-                button.textContent = "Trimite e-mailul";
+                sending = false;
+                syncSendButton();
+                byId("sendButton").textContent = "Trimite e-mailul";
             }
         });
 

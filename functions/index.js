@@ -1,6 +1,8 @@
 "use strict";
 
+const { randomUUID } = require("node:crypto");
 const { initializeApp } = require("firebase-admin/app");
+const { getStorage } = require("firebase-admin/storage");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret, defineString } = require("firebase-functions/params");
 
@@ -12,6 +14,23 @@ const resendApiKey = defineSecret("RESEND_API_KEY");
 const allowedSenderEmails = defineString("SENDER_ALLOWED_EMAILS");
 const verifiedFromAddress = defineString("RESEND_FROM_EMAIL");
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function assertAuthorizedSender(request) {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in to use the email sender.");
+  }
+  const accountEmail = request.auth.token.email;
+  if (!request.auth.token.email_verified || typeof accountEmail !== "string") {
+    throw new HttpsError("permission-denied", "A verified account is required.");
+  }
+  const permittedEmails = allowedSenderEmails.value()
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  if (!permittedEmails.includes(accountEmail.toLowerCase())) {
+    throw new HttpsError("permission-denied", "This account is not allowed to use the email sender.");
+  }
+}
 
 function escapeHtml(value) {
   return value
@@ -96,25 +115,57 @@ function buildEmailHtml({
 </html>`;
 }
 
+exports.saveEmailAsset = onCall(async (request) => {
+  assertAuthorizedSender(request);
+  const { kind, contentType, content } = request.data || {};
+  const allowedTypes = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+  };
+  if (
+    !["background", "logo", "stamp"].includes(kind) ||
+    !Object.hasOwn(allowedTypes, contentType) ||
+    typeof content !== "string" ||
+    content.length > 7_000_000 ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(content)
+  ) {
+    throw new HttpsError("invalid-argument", "Invalid image upload.");
+  }
+  const image = Buffer.from(content, "base64");
+  if (image.length > 5 * 1024 * 1024 || image.toString("base64") !== content) {
+    throw new HttpsError("invalid-argument", "Images must be no larger than 5 MB.");
+  }
+  const signatures = {
+    "image/png": image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+    "image/jpeg": image[0] === 0xff && image[1] === 0xd8 && image[2] === 0xff,
+    "image/webp": image.toString("ascii", 0, 4) === "RIFF" && image.toString("ascii", 8, 12) === "WEBP",
+  };
+  if (!signatures[contentType]) {
+    throw new HttpsError("invalid-argument", "The uploaded file is not a valid image of that type.");
+  }
+
+  const bucketName = "gemeenteecht-mailer.firebasestorage.app";
+  const objectPath = `email-assets/${request.auth.uid}/${kind}-${randomUUID()}.${allowedTypes[contentType]}`;
+  const token = randomUUID();
+  await getStorage().bucket(bucketName).file(objectPath).save(image, {
+    resumable: false,
+    metadata: {
+      contentType,
+      cacheControl: "public, max-age=31536000",
+      metadata: { firebaseStorageDownloadTokens: token },
+    },
+  });
+  const url = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(objectPath)}?alt=media&token=${token}`;
+  return { url };
+});
+
 exports.sendEmail = onCall(
   {
     secrets: [resendApiKey],
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in to send email.");
-    }
-    const accountEmail = request.auth.token.email;
-    if (!request.auth.token.email_verified || typeof accountEmail !== "string") {
-      throw new HttpsError("permission-denied", "A verified account is required.");
-    }
-    const permittedEmails = allowedSenderEmails.value()
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
-    if (!permittedEmails.includes(accountEmail.toLowerCase())) {
-      throw new HttpsError("permission-denied", "This account is not allowed to send email.");
-    }
+    assertAuthorizedSender(request);
 
     const {
       to,
