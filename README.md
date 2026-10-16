@@ -4,7 +4,7 @@ A private email composer for the `gemeenteecht-mailer` Firebase project. It supp
 
 ## One-time setup
 
-1. In Firebase Console, enable **Authentication → Email/Password** and **Email link (passwordless sign-in)**. Add the Hosting domain to Firebase Authentication's authorized domains. The email address must appear in the function's `SENDER_ALLOWED_EMAILS` parameter; only those addresses can send email or upload assets.
+1. In Firebase Console, enable **Authentication → Email/Password**, create the sender account, and verify its email address. The email address must appear in the function's `SENDER_ALLOWED_EMAILS` parameter; only those addresses can send email or upload assets. Use **Resetează parola** on the app's sign-in screen to set or recover the account password without sharing it.
 2. Enable **Cloud Storage** for the project. Deploy the included rules; client access is denied, and image uploads are handled by the authenticated, allowlisted function.
 3. Verify `gemeenteecht-susteren.com` as a sending domain in Resend and create a new API key. The configured sender address is `contact@gemeenteecht-susteren.com` and must be authorized by that verified domain.
 4. Install the Firebase CLI and dependencies:

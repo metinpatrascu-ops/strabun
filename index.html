@@ -118,13 +118,20 @@
         <section id="loginView" class="card login-card">
             <p class="eyebrow">Private workspace</p>
             <h2>Conectează-te</h2>
-            <p>Primește un link de conectare pe e-mail. Numai adresele autorizate pot trimite mesaje.</p>
+            <p>Conectează-te cu parola contului autorizat. Numai adresele aprobate pot trimite mesaje.</p>
             <form id="loginForm">
                 <div class="field">
                     <label for="loginEmail">E-mail</label>
                     <input id="loginEmail" type="email" autocomplete="email" required>
                 </div>
-                <div class="form-actions"><span></span><button id="loginSubmitButton" class="primary" type="submit">Trimite linkul de conectare</button></div>
+                <div class="field" style="margin-top:15px">
+                    <label for="loginPassword">Parolă</label>
+                    <input id="loginPassword" type="password" autocomplete="current-password" required>
+                </div>
+                <div class="form-actions">
+                    <button id="resetPasswordButton" class="secondary" type="button">Resetează parola</button>
+                    <button class="primary" type="submit">Conectează-te</button>
+                </div>
                 <div id="loginNotice" class="notice" role="status"></div>
             </form>
         </section>
@@ -214,7 +221,7 @@
     </main>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-        import { getAuth, isSignInWithEmailLink, onAuthStateChanged, sendSignInLinkToEmail, signInWithEmailLink, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
 
         const firebaseConfig = {
@@ -231,7 +238,6 @@
         const functions = getFunctions(app, "us-central1");
         const sendEmail = httpsCallable(functions, "sendEmail");
         const saveEmailAsset = httpsCallable(functions, "saveEmailAsset");
-        const emailLinkSignIn = isSignInWithEmailLink(auth, window.location.href);
         const assetUrls = { background: "", logo: "", stamp: "" };
         const byId = (id) => document.getElementById(id);
         let uploadsInProgress = 0;
@@ -264,43 +270,32 @@
             }
         });
 
-        async function completeEmailLinkSignIn(email) {
-            try {
-                await signInWithEmailLink(auth, email, window.location.href);
-                window.localStorage.removeItem("emailForSignIn");
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch {
-                setNotice(byId("loginNotice"), "Linkul nu este valid sau a expirat. Solicită unul nou.");
-            }
-        }
-
-        if (emailLinkSignIn) {
-            byId("loginSubmitButton").textContent = "Finalizează conectarea";
-            setNotice(byId("loginNotice"), "Introdu adresa la care ai primit linkul pentru a finaliza conectarea.", "success");
-            const savedEmail = window.localStorage.getItem("emailForSignIn");
-            if (savedEmail) {
-                byId("loginEmail").value = savedEmail;
-                await completeEmailLinkSignIn(savedEmail);
-            }
-        }
-
         byId("loginForm").addEventListener("submit", async (event) => {
             event.preventDefault();
             clearNotice(byId("loginNotice"));
+            try {
+                await signInWithEmailAndPassword(
+                    auth,
+                    byId("loginEmail").value.trim(),
+                    byId("loginPassword").value
+                );
+            } catch {
+                setNotice(byId("loginNotice"), "Conectarea nu a reușit. Verifică adresa, parola și verificarea e-mailului.");
+            }
+        });
+
+        byId("resetPasswordButton").addEventListener("click", async () => {
+            clearNotice(byId("loginNotice"));
             const email = byId("loginEmail").value.trim();
-            if (emailLinkSignIn) {
-                await completeEmailLinkSignIn(email);
+            if (!email) {
+                setNotice(byId("loginNotice"), "Introdu adresa de e-mail pentru a primi instrucțiunile de resetare.");
                 return;
             }
             try {
-                await sendSignInLinkToEmail(auth, email, {
-                    url: `${window.location.origin}${window.location.pathname}`,
-                    handleCodeInApp: true
-                });
-                window.localStorage.setItem("emailForSignIn", email);
-                setNotice(byId("loginNotice"), "Ți-am trimis un link de conectare. Deschide-l pe acest dispozitiv.", "success");
+                await sendPasswordResetEmail(auth, email);
+                setNotice(byId("loginNotice"), "Dacă există un cont pentru această adresă, vei primi instrucțiuni de resetare.", "success");
             } catch {
-                setNotice(byId("loginNotice"), "Nu am putut trimite linkul. Verifică adresa și încearcă din nou.");
+                setNotice(byId("loginNotice"), "Nu am putut trimite instrucțiunile. Verifică adresa și încearcă din nou.");
             }
         });
 
