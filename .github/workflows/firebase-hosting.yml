@@ -27,3 +27,15 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GEMEENTECHT_MAILER }}
           projectId: gemeenteecht-mailer
           channelId: live
+
+      - name: Deploy Cloud Functions
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GEMEENTECHT_MAILER }}
+        run: |
+          credentials_file="$(mktemp)"
+          trap 'rm -f "$credentials_file"' EXIT
+          chmod 600 "$credentials_file"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_file"
+          npm ci --prefix functions
+          GOOGLE_APPLICATION_CREDENTIALS="$credentials_file" \
+            npx --yes firebase-tools deploy --only functions --project gemeenteecht-mailer --non-interactive
