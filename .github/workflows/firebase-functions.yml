@@ -1,0 +1,40 @@
+name: Deploy to Firebase Functions
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-functions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GEMEENTECHT_MAILER }}
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Check function syntax
+        run: npm --prefix functions run lint
+
+      - name: Deploy Firebase Functions
+        run: npx --yes firebase-tools deploy --only functions --project gemeenteecht-mailer
