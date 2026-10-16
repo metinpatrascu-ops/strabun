@@ -517,5 +517,25 @@
     }, {passive: true});
 </script>
 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKR_9TJ3_DeT1NCAkDPo--hRlD2pImZ5E",
+        authDomain: "gemeenteecht-mailer.firebaseapp.com",
+        projectId: "gemeenteecht-mailer",
+        storageBucket: "gemeenteecht-mailer.firebasestorage.app",
+        messagingSenderId: "306239684293",
+        appId: "1:306239684293:web:e9a75b9dd9a9f9f82ffaac",
+        measurementId: "G-4YZL6E4WBD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    isSupported().then((supported) => {
+        if (supported) getAnalytics(app);
+    });
+</script>
+
 </body>
 </html>
