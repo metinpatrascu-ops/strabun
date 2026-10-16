@@ -2,520 +2,402 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Străbun - The Luxury Experience</title>
-    
-    <!-- Fonturi Premium -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f6f5f1">
+    <title>Expeditor — compune un e-mail</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-primary: #c84b31; 
-            --brand-gold: #d4a373;    
-            --white: #ffffff;
-            --glass: rgba(0, 0, 0, 0.94);
-            --speed: 0.4s; 
-            --ease: cubic-bezier(0.25, 1, 0.5, 1);
+            color-scheme: light;
+            --ink: #21241f;
+            --muted: #82857e;
+            --line: #e8e8e2;
+            --paper: #fff;
+            --canvas: #f6f5f1;
+            --accent: #426b53;
+            --accent-dark: #34563f;
+            --soft-green: #edf3ed;
+            --shadow: 0 18px 55px rgba(32, 40, 32, .07);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body, html {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #000;
-            color: var(--white);
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: "DM Sans", sans-serif;
+            min-height: 100vh;
         }
-
-        .slider-container {
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            background: #000;
-        }
-
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            visibility: hidden;
-            background-size: cover !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-            transition: opacity var(--speed) var(--ease), visibility var(--speed);
+        button, input, textarea { font: inherit; }
+        button { cursor: pointer; }
+        .app-shell { width: min(1440px, 100%); margin: 0 auto; padding: 0 42px 42px; }
+        .topbar {
+            height: 82px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            will-change: opacity;
-        }
-
-        .slide.active {
-            opacity: 1;
-            visibility: visible;
-            z-index: 5;
-        }
-
-        /* Overlay cu contrast ridicat */
-        .slide::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, 
-                rgba(0,0,0,0.2) 0%, 
-                rgba(0,0,0,0.6) 40%, 
-                rgba(0,0,0,0.95) 100%);
-            z-index: 1;
-        }
-
-        .content {
-            position: relative;
-            z-index: 10;
-            width: 90%;
-            max-width: 1050px;
-            padding: 20px;
-            transform: translateY(30px);
-            opacity: 0;
-            transition: all 0.5s var(--ease) 0.1s;
-        }
-
-        .slide.active .content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        /* Design Text Luxury */
-        .kicker {
-            font-size: 13px;
-            letter-spacing: 7px;
-            text-transform: uppercase;
-            color: var(--brand-gold);
-            margin-bottom: 15px;
-            display: block;
-            font-weight: 700;
-            text-shadow: 2px 2px 15px rgba(0,0,0,1);
-        }
-
-        h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(38px, 8vw, 86px);
-            line-height: 1;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            color: #fff;
-            text-shadow: 0 10px 30px rgba(0,0,0,1);
-        }
-
-        .description {
-            font-size: 20px;
-            font-weight: 400;
-            line-height: 1.8;
-            max-width: 800px;
-            margin-bottom: 35px;
-            color: #fff;
-            border-left: 6px solid var(--brand-primary);
-            padding: 15px 0 15px 30px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,1);
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(5px);
-        }
-
-        .quote-text {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: clamp(24px, 5vw, 42px);
-            line-height: 1.4;
-            color: #fff;
-            margin-bottom: 20px;
-            text-shadow: 0 5px 15px rgba(0,0,0,1);
-        }
-
-        /* Meniu Grid Optimizat */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            background: var(--glass);
-            padding: 45px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255,255,255,0.15);
-            max-height: 50vh;
-            overflow-y: auto;
-        }
-
-        .menu-grid::-webkit-scrollbar { width: 3px; }
-        .menu-grid::-webkit-scrollbar-thumb { background: var(--brand-gold); }
-
-        .menu-item {
-            display: flex;
             justify-content: space-between;
-            align-items: baseline;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 10px;
+            border-bottom: 1px solid #e9e8e2;
         }
-
-        .item-name { font-family: 'Playfair Display', serif; font-size: 24px; color: #fff; font-weight: 700; }
-        .item-price { color: var(--brand-gold); font-weight: 700; font-size: 22px; min-width: 100px; text-align: right; }
-        .item-detail { font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.8); display: block; margin-top: 6px; letter-spacing: 1.5px; }
-
-        /* Controale */
-        .controls {
-            position: absolute;
-            bottom: 40px;
-            left: 5%;
-            z-index: 100;
-            display: flex;
-            gap: 20px;
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+        .brand-mark {
+            width: 38px; height: 38px; display: grid; place-items: center;
+            color: #fff; background: var(--accent); border-radius: 12px;
         }
-
-        .nav-btn {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: #fff;
-            padding: 18px 35px;
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: 0.3s ease;
-            font-weight: 700;
-            backdrop-filter: blur(10px);
+        .brand-mark svg { width: 19px; height: 19px; }
+        .brand-name { font: 800 19px/1 "Manrope", sans-serif; letter-spacing: -.7px; }
+        .brand-caption { color: var(--muted); font-size: 11px; margin-top: 5px; }
+        .topbar-right { display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 12px; }
+        .secure-label { display: flex; gap: 7px; align-items: center; }
+        .secure-label svg { width: 15px; height: 15px; color: var(--accent); }
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+            background: #e6e9df; color: var(--accent-dark); font-weight: 700;
         }
-
-        .nav-btn:hover { background: var(--brand-primary); border-color: var(--brand-primary); transform: translateY(-5px); }
-
-        .dots {
-            position: absolute;
-            top: 50%;
-            right: 4%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 100;
+        main { padding-top: 38px; }
+        .page-heading { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
+        .eyebrow { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+        h1 { font: 700 clamp(27px, 3vw, 36px)/1.2 "Manrope", sans-serif; letter-spacing: -1.5px; margin: 8px 0 0; }
+        .subtitle { color: var(--muted); font-size: 14px; margin: 9px 0 0; }
+        .draft-pill {
+            display: flex; align-items: center; gap: 8px; border: 1px solid var(--line);
+            border-radius: 999px; padding: 9px 13px; color: #666a63; background: rgba(255,255,255,.65); font-size: 11px;
         }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: 0.4s;
+        .draft-dot { width: 7px; height: 7px; border-radius: 50%; background: #d3a04d; }
+        .workspace { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(380px, .94fr); gap: 22px; align-items: start; }
+        .panel { background: var(--paper); border: 1px solid #edede8; border-radius: 17px; box-shadow: var(--shadow); }
+        .compose-panel { padding: 27px 29px 25px; }
+        .panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .panel-title { font: 700 15px "Manrope", sans-serif; }
+        .panel-hint { color: var(--muted); font-size: 11px; }
+        .field { margin-bottom: 17px; }
+        .field-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        label, .label-text { font-size: 12px; color: #444841; font-weight: 600; }
+        .optional { color: #a1a39c; font-size: 10px; font-weight: 400; }
+        .input-wrap { position: relative; }
+        input[type="text"], input[type="email"], textarea {
+            display: block; width: 100%; border: 1px solid #e5e6df; border-radius: 9px;
+            background: #fff; color: var(--ink); outline: none; transition: border-color .18s, box-shadow .18s;
         }
-
-        .dot.active { background: var(--brand-gold); border-color: var(--brand-gold); transform: scale(2); box-shadow: 0 0 20px var(--brand-gold); }
-
-        /* Contact Section */
-        .contact-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 30px;
-            justify-content: center;
+        input[type="text"], input[type="email"] { height: 43px; padding: 0 13px; font-size: 12px; }
+        textarea { min-height: 149px; resize: vertical; padding: 13px; font-size: 12px; line-height: 1.7; }
+        input:focus, textarea:focus { border-color: #86a18b; box-shadow: 0 0 0 3px rgba(66,107,83,.09); }
+        input::placeholder, textarea::placeholder { color: #b0b2ac; }
+        .sender-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+        .sender-name-wrap { position: relative; }
+        .sender-name-wrap input { padding-left: 37px; }
+        .sender-icon { position: absolute; top: 13px; left: 12px; color: #899087; font-size: 13px; }
+        .verified {
+            height: 43px; border: 1px solid #e5e6df; border-radius: 9px; background: #fbfcfa;
+            display: flex; align-items: center; gap: 8px; padding: 0 11px; overflow: hidden;
         }
-        .contact-box {
-            background: rgba(0,0,0,0.7);
-            padding: 20px 30px;
-            border-top: 4px solid var(--brand-gold);
-            min-width: 200px;
-            backdrop-filter: blur(10px);
-            text-align: center;
+        .verified-icon { width: 18px; height: 18px; flex: 0 0 auto; color: var(--accent); }
+        .verified-copy { min-width: 0; }
+        .verified-address { color: #43483f; font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .verified-caption { color: #969a92; font-size: 9px; margin-top: 2px; }
+        .hint { color: #94978f; font-size: 10px; margin-top: 7px; line-height: 1.5; }
+        .divider { border: 0; border-top: 1px solid #eee; margin: 22px 0 19px; }
+        .style-heading { font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+        .style-options { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+        .style-option {
+            width: 34px; height: 34px; border-radius: 10px; border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #e1e2dc; position: relative; transition: transform .15s, box-shadow .15s;
         }
-        .contact-box h4 { font-size: 11px; text-transform: uppercase; color: var(--brand-gold); margin-bottom: 8px; letter-spacing: 2px; }
-        .contact-box p { font-size: 16px; font-weight: 600; color: #fff; }
-
-        @media (max-width: 768px) {
-            h2 { font-size: 40px; }
-            .description { font-size: 16px; padding-left: 20px; }
-            .nav-btn span { display: none; }
-            .controls { bottom: 25px; width: 90%; justify-content: space-between; }
-            .menu-grid { padding: 30px 20px; }
+        .style-option:hover { transform: translateY(-2px); }
+        .style-option.selected { box-shadow: 0 0 0 2px var(--accent); }
+        .style-option[aria-label="Verde"] { background: #eaf1e8; }
+        .style-option[aria-label="Ivory"] { background: #f7f1e5; }
+        .style-option[aria-label="Roz"] { background: #f8e9e8; }
+        .style-option[aria-label="Albastru"] { background: #e8eff7; }
+        .style-option[aria-label="Întunecat"] { background: #303b38; }
+        .stamp-button {
+            height: 34px; border: 1px solid #e5e6df; border-radius: 9px; background: white;
+            padding: 0 11px; color: #62665e; font-size: 10px; display: flex; align-items: center; gap: 6px;
+        }
+        .stamp-button.selected { color: var(--accent-dark); background: var(--soft-green); border-color: #c9d8ca; }
+        .stamp-symbol { color: #ba8e48; font-size: 14px; }
+        .logo-upload { display: flex; align-items: center; gap: 9px; }
+        .upload-button {
+            height: 34px; padding: 0 11px; border: 1px dashed #d4d6ce; border-radius: 9px;
+            color: #666a62; background: #fff; font-size: 10px; display: inline-flex; align-items: center; gap: 7px;
+        }
+        .upload-button svg { width: 14px; height: 14px; }
+        #logoFile { display: none; }
+        #logoName { color: #858980; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .compose-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 21px; gap: 12px; }
+        .delivery-note { display: flex; align-items: flex-start; gap: 7px; color: #858980; max-width: 255px; font-size: 10px; line-height: 1.5; }
+        .delivery-note svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px; }
+        .send-button {
+            min-height: 43px; border: 0; border-radius: 9px; background: var(--accent); color: white;
+            font-weight: 700; font-size: 11px; padding: 0 17px; display: flex; align-items: center; gap: 9px;
+            transition: background .18s, transform .18s;
+        }
+        .send-button:hover { background: var(--accent-dark); transform: translateY(-1px); }
+        .send-button svg { width: 15px; height: 15px; }
+        .preview-panel { overflow: hidden; }
+        .preview-top { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px; border-bottom: 1px solid #eeeeea; }
+        .preview-title { font: 700 13px "Manrope", sans-serif; }
+        .live-label { display: flex; align-items: center; gap: 6px; color: #899087; font-size: 10px; }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #72a780; }
+        .preview-area { min-height: 455px; padding: 25px 22px 28px; background: #f8f8f5; display: flex; justify-content: center; align-items: flex-start; }
+        .email-card {
+            width: 100%; max-width: 445px; background: #eaf1e8; border-radius: 11px; padding: 25px;
+            color: #26332a; box-shadow: 0 6px 18px rgba(30,40,30,.06); transition: background .2s, color .2s;
+        }
+        .email-card.theme-ivory { background: #f7f1e5; }
+        .email-card.theme-rose { background: #f8e9e8; }
+        .email-card.theme-blue { background: #e8eff7; }
+        .email-card.theme-dark { background: #303b38; color: #f4f5f0; }
+        .email-brand { display: flex; align-items: center; gap: 9px; padding-bottom: 18px; border-bottom: 1px solid rgba(70,80,70,.14); }
+        .email-logo {
+            width: 29px; height: 29px; border-radius: 8px; display: grid; place-items: center;
+            overflow: hidden; background: rgba(255,255,255,.65); color: var(--accent); font-size: 11px; font-weight: 800;
+        }
+        .email-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .email-brand-name { font: 700 11px "Manrope", sans-serif; }
+        .email-stamp {
+            margin-left: auto; border: 1px solid #bd9657; border-radius: 50%; color: #a27a39; width: 39px; height: 39px;
+            display: grid; place-items: center; text-align: center; font-size: 8px; line-height: 1;
+            transform: rotate(10deg); font-weight: 700;
+        }
+        .email-stamp.hidden { display: none; }
+        .email-content { padding-top: 22px; min-height: 195px; }
+        .email-subject { font: 700 18px/1.35 "Manrope", sans-serif; letter-spacing: -.4px; margin: 0 0 15px; overflow-wrap: anywhere; }
+        .email-message { white-space: pre-wrap; font-size: 11px; line-height: 1.8; color: inherit; opacity: .8; overflow-wrap: anywhere; }
+        .email-signoff { padding-top: 19px; border-top: 1px solid rgba(70,80,70,.14); color: inherit; opacity: .65; font-size: 9px; }
+        .email-signoff strong { display: block; opacity: 1; margin-top: 4px; font-size: 10px; }
+        .preview-meta { margin-top: 16px; color: #979a93; font-size: 10px; text-align: center; }
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); opacity: 0;
+            max-width: calc(100% - 32px); width: max-content; background: #242923; color: #fff; border-radius: 10px;
+            padding: 13px 17px; font-size: 12px; line-height: 1.5; box-shadow: 0 8px 25px rgba(0,0,0,.15);
+            pointer-events: none; transition: .2s; z-index: 5;
+        }
+        .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+        @media (max-width: 900px) {
+            .app-shell { padding: 0 24px 28px; }
+            .workspace { grid-template-columns: 1fr; }
+            .preview-area { min-height: 0; }
+        }
+        @media (max-width: 560px) {
+            .app-shell { padding: 0 15px 24px; }
+            .topbar { height: 69px; }
+            .topbar-right { gap: 10px; }
+            .secure-label span { display: none; }
+            main { padding-top: 27px; }
+            .page-heading { align-items: flex-start; }
+            .draft-pill { margin-top: 8px; font-size: 0; padding: 9px; }
+            .draft-dot { width: 8px; height: 8px; }
+            .compose-panel { padding: 21px 17px; }
+            .sender-row { grid-template-columns: 1fr; }
+            .compose-footer { align-items: stretch; flex-direction: column; }
+            .delivery-note { max-width: none; }
+            .send-button { justify-content: center; }
+            .preview-top { padding: 17px; }
+            .preview-area { padding: 17px 12px; }
+            .email-card { padding: 19px; }
         }
     </style>
 </head>
 <body>
-
-<div class="slider-container" id="slider">
-    
-    <!-- SLIDE 1: INTRO -->
-    <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Străbun - Luxury Dining</span>
-            <h2>O Poveste <br>A Gustului</h2>
-            <p class="description">Fiecare aromă Străbun poartă amprenta timpului și a muncii cinstite. Redescoperă ritualul mesei românești, gătite cu răbdare și pasiune, exact așa cum se făcea odinioară.</p>
-        </div>
-    </div>
-
-    <!-- SLIDE 2: VORBELE LUI CHEF -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Filozofia de viață</span>
-            <h2>Vorbele lui <br>Chef Răzvan</h2>
-            <p class="quote-text">„Mâncarea nu se face în grabă, se face cu tihnă. Un străbun mi-a spus odată că jarul nu minte niciodată: dacă ai răbdare, îți dă aur curat în farfurie.”</p>
-            <p class="description" style="background: none; border: none; padding: 0;">Fiecare preparat semnat de Răzvan Mangu este o lecție de respect pentru pământ și pentru cei care vin să ne treacă pragul.</p>
-        </div>
-    </div>
-
-    <!-- SLIDE 3: RECOMANDĂRILE CHEF-ULUI -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2069&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Experiențe de încercat</span>
-            <h2>Recomandările <br>Chef-ului</h2>
-            <div class="menu-grid">
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Tochitură ca la Stână</span>
-                        <span class="item-detail">Carne de porc, cârnați artizanali, ou ochi și brânză maturată</span>
-                    </div>
-                    <span class="item-price">56 RON</span>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="brand" href="#" aria-label="Expeditor, pagina principală">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 9 7 9-7"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+                </span>
+                <span><span class="brand-name">expeditor</span><span class="brand-caption">mesaje cu identitatea ta</span></span>
+            </a>
+            <div class="topbar-right">
+                <div class="secure-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Expediere de pe o adresă verificată</span>
                 </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Ciolan de Porc la Jar</span>
-                        <span class="item-detail">Gătit 12 ore, servit cu fasole bătută și hrean</span>
-                    </div>
-                    <span class="item-price">68 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Tigaie Străbun</span>
-                        <span class="item-detail">Amestec încins de legume de sezon și vită fragedă</span>
-                    </div>
-                    <span class="item-price">52 RON</span>
-                </div>
+                <span class="avatar" aria-label="Cont">E</span>
             </div>
-            <p style="margin-top: 20px; font-style: italic; font-size: 14px; color: var(--brand-gold);">* Recomandarea lui Chef: „Nu uitați de vinul casei pentru a desăvârși masa.”</p>
-        </div>
-    </div>
+        </header>
 
-    <!-- SLIDE 4: ANTREURI -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1541518763669-27fef04b14ea?q=80&w=1933&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Prologul Mesei</span>
-            <h2>Gustări de <br>Început</h2>
-            <div class="menu-grid">
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Zacuscă pe Vatrate</span>
-                        <span class="item-detail">Ardei copți la jar, ceapă de apă, ulei presat la rece</span>
-                    </div>
-                    <span class="item-price">28 RON</span>
+        <main>
+            <div class="page-heading">
+                <div>
+                    <div class="eyebrow">Studio de e-mail</div>
+                    <h1>Un mesaj, în stilul tău.</h1>
+                    <p class="subtitle">Alege cum arată expeditorul și personalizează mesajul.</p>
                 </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Salată de Vinete</span>
-                        <span class="item-detail">Vinete arse pe foc viu, servite cu pâine caldă</span>
-                    </div>
-                    <span class="item-price">32 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Platou Străbun</span>
-                        <span class="item-detail">Mezeluri artizanale și brânzeturi românești (2 pers)</span>
-                    </div>
-                    <span class="item-price">85 RON</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SLIDE 5: CIORBE -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=2071&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Căldura Tradiției</span>
-            <h2>Ciorbe <br>Aburinde</h2>
-            <div class="menu-grid">
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Ciorbă de Burtă</span>
-                        <span class="item-detail">Dreasă cu smântână grasă și mult usturoi</span>
-                    </div>
-                    <span class="item-price">34 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Borș de Văcuță</span>
-                        <span class="item-detail">Carne fragedă și legume proaspete de grădină</span>
-                    </div>
-                    <span class="item-price">30 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Ciorbă Rădăuțeană</span>
-                        <span class="item-detail">Pui de țară, usturoi și smântână de la munte</span>
-                    </div>
-                    <span class="item-price">32 RON</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SLIDE 6: SEMNĂTURA -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2069&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Capodopera</span>
-            <h2>Carne la <br>Garniță</h2>
-            <p class="description">Bucăți alese de porc păstrate în untură proprie, gătite la foc mic timp de ore întregi până când carnea devine un poem de tandrețe. O servim cu mămăliguță aurie, brânză de burduf maturată și murături puse de noi.</p>
-            <div class="menu-grid" style="max-height: none; padding: 25px;">
-                <div class="menu-item" style="border:none; margin:0;">
-                    <div class="item-info">
-                        <span class="item-name">Porție Străbun (450g)</span>
-                        <span class="item-detail">Include mămăligă, brânză și murături asortate</span>
-                    </div>
-                    <span class="item-price">62 RON</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SLIDE 7: GRĂTAR -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1974&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Esența Focului</span>
-            <h2>De pe <br>Grătar</h2>
-            <div class="menu-grid">
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Mici Străbun (buc)</span>
-                        <span class="item-detail">Rețetă proprie vită-oaie, muștar artizanal</span>
-                    </div>
-                    <span class="item-price">9 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Cârnați de Porc</span>
-                        <span class="item-detail">Afumați natural cu lemn de fag</span>
-                    </div>
-                    <span class="item-price">38 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Ceafă de Porc</span>
-                        <span class="item-detail">Frăgezită în baiț de ierburi (250g)</span>
-                    </div>
-                    <span class="item-price">44 RON</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SLIDE 8: DESERT -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=1928&auto=format&fit=crop');">
-        <div class="content">
-            <span class="kicker">Finalul Dulce</span>
-            <h2>Deserturi <br>Artizanale</h2>
-            <div class="menu-grid">
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Înghețată Străbun</span>
-                        <span class="item-detail">Sortimente făcute în casă la fiecare răsărit</span>
-                    </div>
-                    <span class="item-price">18 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Papanași Fiți</span>
-                        <span class="item-detail">Cu smântână grasă și dulceață de afine</span>
-                    </div>
-                    <span class="item-price">38 RON</span>
-                </div>
-                <div class="menu-item">
-                    <div>
-                        <span class="item-name">Plăcintă cu Mere</span>
-                        <span class="item-detail">Foi întinse manual, scorțișoară și nucă</span>
-                    </div>
-                    <span class="item-price">24 RON</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SLIDE 9: CONTACT -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop');">
-        <div class="content" style="text-align: center;">
-            <span class="kicker" style="margin: 0 auto 15px;">Vă așteptăm cu drag</span>
-            <h2>Contact & <br>Rezervări</h2>
-            <p class="description" style="margin: 0 auto 30px; border:none; padding:0; background: none; backdrop-filter: none;">Descoperă gustul autentic în inima Bucureștiului.</p>
-            
-            <div class="contact-info">
-                <div class="contact-box">
-                    <h4>Telefon</h4>
-                    <p>0725 330 033</p>
-                </div>
-                <div class="contact-box">
-                    <h4>Locație</h4>
-                    <p>Str. George Vraca nr. 7</p>
-                </div>
-                <div class="contact-box">
-                    <h4>Instagram</h4>
-                    <p>@strabun_restaurant</p>
-                </div>
+                <div class="draft-pill"><span class="draft-dot"></span> Ciornă nouă</div>
             </div>
 
-            <div style="margin-top: 50px; display: flex; justify-content: center; gap: 20px;">
-                <button class="nav-btn" onclick="window.location.reload()">Acasă</button>
-                <button class="nav-btn" style="background: var(--brand-primary); border-color: var(--brand-primary);">Rezervă Masa</button>
+            <div class="workspace">
+                <section class="panel compose-panel" aria-labelledby="composeTitle">
+                    <div class="panel-heading">
+                        <div class="panel-title" id="composeTitle">Compune mesajul</div>
+                        <div class="panel-hint">Toate câmpurile marcate * sunt necesare</div>
+                    </div>
+                    <form id="emailForm">
+                        <div class="field">
+                            <div class="field-label"><label for="recipient">Către *</label></div>
+                            <input id="recipient" name="recipient" type="email" placeholder="destinatar@exemplu.ro" required autocomplete="email">
+                        </div>
+
+                        <div class="field">
+                            <div class="field-label"><span class="label-text">Expeditor *</span><span class="optional">Numele apare primul la destinatar</span></div>
+                            <div class="sender-row">
+                                <div class="sender-name-wrap">
+                                    <span class="sender-icon" aria-hidden="true">Aa</span>
+                                    <input id="senderName" name="senderName" type="text" placeholder="Numele tău" value="Numele meu" maxlength="80" required autocomplete="name" aria-label="Numele afișat al expeditorului">
+                                </div>
+                                <div class="verified" title="Adresa de expediere este configurată de serviciu">
+                                    <svg class="verified-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
+                                    <div class="verified-copy"><div class="verified-address">adresă-verificată@serviciu.ro</div><div class="verified-caption">Adresă de expediere verificată</div></div>
+                                </div>
+                            </div>
+                            <div class="hint">Destinatarul va vedea întâi numele ales de tine. E-mailul este trimis numai printr-o adresă verificată.</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="field-label"><label for="subject">Subiect *</label></div>
+                            <input id="subject" name="subject" type="text" placeholder="Despre ce este mesajul?" maxlength="160" required>
+                        </div>
+
+                        <div class="field">
+                            <div class="field-label"><label for="message">Mesaj *</label><span class="optional" id="characterCount">0 caractere</span></div>
+                            <textarea id="message" name="message" placeholder="Scrie mesajul tău aici..." maxlength="5000" required></textarea>
+                        </div>
+
+                        <hr class="divider">
+                        <div class="style-heading">Personalizează aspectul</div>
+                        <div class="style-options" role="group" aria-label="Alege fundalul mesajului">
+                            <button class="style-option selected" type="button" aria-label="Verde" aria-pressed="true" data-theme="green"></button>
+                            <button class="style-option" type="button" aria-label="Ivory" aria-pressed="false" data-theme="ivory"></button>
+                            <button class="style-option" type="button" aria-label="Roz" aria-pressed="false" data-theme="rose"></button>
+                            <button class="style-option" type="button" aria-label="Albastru" aria-pressed="false" data-theme="blue"></button>
+                            <button class="style-option" type="button" aria-label="Întunecat" aria-pressed="false" data-theme="dark"></button>
+                            <button class="stamp-button selected" id="stampToggle" type="button" aria-pressed="true"><span class="stamp-symbol" aria-hidden="true">✳</span> Ștampilă</button>
+                            <div class="logo-upload">
+                                <label class="upload-button" for="logoFile">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+                                    Adaugă siglă
+                                </label>
+                                <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                                <span id="logoName">Opțional</span>
+                            </div>
+                        </div>
+
+                        <div class="compose-footer">
+                            <div class="delivery-note">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+                                <span>Previzualizarea este disponibilă. Trimiterea reală necesită conectarea unui serviciu de e-mail.</span>
+                            </div>
+                            <button class="send-button" type="submit">
+                                Pregătește e-mailul
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel preview-panel" aria-labelledby="previewTitle">
+                    <div class="preview-top">
+                        <div class="preview-title" id="previewTitle">Previzualizare</div>
+                        <div class="live-label"><span class="live-dot"></span> Actualizare live</div>
+                    </div>
+                    <div class="preview-area">
+                        <article class="email-card" id="emailCard">
+                            <div class="email-brand">
+                                <div class="email-logo" id="emailLogo" aria-label="Siglă">E</div>
+                                <div class="email-brand-name" id="brandName">Numele meu</div>
+                                <div class="email-stamp" id="emailStamp" aria-label="Ștampilă decorativă">SIGILIU<br>PERSONAL</div>
+                            </div>
+                            <div class="email-content">
+                                <h2 class="email-subject" id="previewSubject">Subiectul mesajului</h2>
+                                <div class="email-message" id="previewMessage">Mesajul tău va apărea aici, cu fundalul ales.</div>
+                            </div>
+                            <div class="email-signoff">Cu drag,<strong id="previewSender">Numele meu</strong></div>
+                        </article>
+                    </div>
+                    <div class="preview-meta">Așa va arăta designul mesajului tău</div>
+                </section>
             </div>
-        </div>
+        </main>
     </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- NAVIGARE -->
-    <div class="controls">
-        <button class="nav-btn" onclick="changeSlide(-1)"><i class="fa-solid fa-arrow-left"></i> <span>Înapoi</span></button>
-        <button class="nav-btn" onclick="changeSlide(1)"><span>Înainte</span> <i class="fa-solid fa-arrow-right"></i></button>
-    </div>
+    <script>
+        const senderName = document.getElementById("senderName");
+        const subject = document.getElementById("subject");
+        const message = document.getElementById("message");
+        const emailCard = document.getElementById("emailCard");
+        const toast = document.getElementById("toast");
+        let toastTimer;
 
-    <div class="dots" id="dotContainer"></div>
-</div>
+        function updatePreview() {
+            const name = senderName.value.trim() || "Numele meu";
+            document.getElementById("brandName").textContent = name;
+            document.getElementById("previewSender").textContent = name;
+            document.getElementById("previewSubject").textContent = subject.value.trim() || "Subiectul mesajului";
+            document.getElementById("previewMessage").textContent = message.value || "Mesajul tău va apărea aici, cu fundalul ales.";
+            document.getElementById("characterCount").textContent = `${message.value.length} caractere`;
+        }
 
-<script>
-    let index = 0;
-    const slides = document.querySelectorAll('.slide');
-    const dotContainer = document.getElementById('dotContainer');
+        [senderName, subject, message].forEach((field) => field.addEventListener("input", updatePreview));
 
-    slides.forEach((_, i) => {
-        const d = document.createElement('div');
-        d.className = `dot ${i === 0 ? 'active' : ''}`;
-        d.onclick = () => showSlide(i);
-        dotContainer.appendChild(d);
-    });
+        document.querySelectorAll(".style-option").forEach((button) => {
+            button.addEventListener("click", () => {
+                document.querySelectorAll(".style-option").forEach((option) => {
+                    option.classList.remove("selected");
+                    option.setAttribute("aria-pressed", "false");
+                });
+                button.classList.add("selected");
+                button.setAttribute("aria-pressed", "true");
+                emailCard.className = `email-card${button.dataset.theme === "green" ? "" : ` theme-${button.dataset.theme}`}`;
+            });
+        });
 
-    const dots = document.querySelectorAll('.dot');
+        document.getElementById("stampToggle").addEventListener("click", (event) => {
+            const button = event.currentTarget;
+            const stamp = document.getElementById("emailStamp");
+            const shown = button.getAttribute("aria-pressed") === "true";
+            button.setAttribute("aria-pressed", String(!shown));
+            button.classList.toggle("selected", !shown);
+            stamp.classList.toggle("hidden", shown);
+        });
 
-    function showSlide(n) {
-        slides[index].classList.remove('active');
-        dots[index].classList.remove('active');
-        index = (n + slides.length) % slides.length;
-        slides[index].classList.add('active');
-        dots[index].classList.add('active');
-    }
+        document.getElementById("logoFile").addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                event.target.value = "";
+                showToast("Alege o siglă mai mică de 2 MB.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                const logo = document.getElementById("emailLogo");
+                logo.replaceChildren();
+                const image = document.createElement("img");
+                image.src = reader.result;
+                image.alt = "Sigla încărcată";
+                logo.append(image);
+                document.getElementById("logoName").textContent = file.name;
+            });
+            reader.readAsDataURL(file);
+        });
 
-    function changeSlide(step) {
-        showSlide(index + step);
-    }
+        function showToast(text) {
+            toast.textContent = text;
+            toast.classList.add("visible");
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 4500);
+        }
 
-    document.addEventListener('keydown', (e) => {
-        if(e.key === 'ArrowRight') changeSlide(1);
-        if(e.key === 'ArrowLeft') changeSlide(-1);
-    });
+        document.getElementById("emailForm").addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (!event.currentTarget.reportValidity()) return;
+            showToast("Mesajul este pregătit. Pentru expediere, conectează un serviciu de e-mail și o adresă de expeditor verificată.");
+        });
 
-    let startX = 0;
-    document.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
-    document.addEventListener('touchend', e => {
-        let diff = startX - e.changedTouches[0].clientX;
-        if(Math.abs(diff) > 40) diff > 0 ? changeSlide(1) : changeSlide(-1);
-    }, {passive: true});
-</script>
-
+        updatePreview();
+    </script>
 </body>
 </html>
