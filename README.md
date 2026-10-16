@@ -28,6 +28,19 @@ A private email composer for the `gemeenteecht-mailer` Firebase project. It supp
 
    This deploy command contains no key value. `SENDER_ALLOWED_EMAILS` and `RESEND_FROM_EMAIL` have defaults in the Functions code; you can override them with Firebase Functions parameters if needed.
 
+## If the Functions deployment fails
+
+The latest GitHub Actions Functions deployment failed because its deploy identity is missing `iam.serviceAccounts.ActAs` on `gemeenteecht-mailer@appspot.gserviceaccount.com`. The Hosting deployment succeeded, but that does not deploy the email function.
+
+To fix this with least privilege:
+
+1. In GitHub repository **Settings → Secrets and variables → Actions**, identify the service account used by `FIREBASE_SERVICE_ACCOUNT_GEMEENTECHT_MAILER`. Its JSON has a `client_email` field. Do not paste or share the JSON key.
+2. In Google Cloud Console, open **IAM & Admin → Service Accounts** for project `gemeenteecht-mailer`, select `gemeenteecht-mailer@appspot.gserviceaccount.com`, and grant that GitHub deploy service account the **Service Account User** role (`roles/iam.serviceAccountUser`) on this service account.
+3. In the repository's **Actions** tab, run **Deploy to Firebase Functions** with **Run workflow**. Confirm the deployment job succeeds before testing email.
+4. Open the deployed app, sign in with the verified allowlisted account, and send a test email to an address you can check. Confirm receipt in Inbox and Spam and check the Resend logs if it does not arrive.
+
+Do not grant the deploy identity broader project permissions just to bypass this error. If you do not have permission to grant the role, ask a Google Cloud project owner to do it.
+
 The recipient sees the sender display name selected in the app, paired with the verified `RESEND_FROM_EMAIL` address. The app never sends through a visitor-provided address. Uploaded images are stored in Firebase Storage by the authenticated function and linked into the HTML email; some email clients may hide images until the recipient allows them.
 
 Never put the Resend API key in source code or client-side code. Any API key previously pasted into chat should be revoked in Resend and replaced with a newly generated key in Secret Manager.
