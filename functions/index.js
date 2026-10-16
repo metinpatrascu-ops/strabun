@@ -43,6 +43,15 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function redactDiagnostic(value) {
+  return String(value)
+    .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, "[redacted email]")
+    .replace(/\bBearer\s+\S+/gi, "******")
+    .replace(/\bre_[A-Za-z0-9_-]{10,}\b/g, "[redacted key]")
+    .replace(/[\r\n\t]+/g, " ")
+    .slice(0, 300);
+}
+
 function validateImageUrl(value, uid, bucket) {
   if (value === "") return "";
   if (typeof value !== "string" || value.length > 2500) {
@@ -225,26 +234,64 @@ exports.sendEmail = onCall(
       textColor,
     });
     const text = signature ? `${message}\n\n${signature}` : message;
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + resendApiKey.value(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `${senderName.trim()} <${fromAddress}>`,
-        to: [to],
-        subject: subject.trim(),
-        text,
-        html,
-      }),
-    });
+    let apiKey;
+    try {
+      apiKey = resendApiKey.value();
+    } catch (error) {
+      console.error("Email provider API key is unavailable", { errorName: error?.name || "UnknownError" });
+      throw new HttpsError("failed-precondition", "Email sending is not configured.");
+    }
+    if (typeof apiKey !== "string" || !apiKey.trim()) {
+      console.error("Email provider API key is empty");
+      throw new HttpsError("failed-precondition", "Email sending is not configured.");
+    }
 
+    let response;
+    try {
+      response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: `${senderName.trim()} <${fromAddress}>`,
+          to: [to],
+          subject: subject.trim(),
+          text,
+          html,
+        }),
+      });
+    } catch (error) {
+      console.error("Email provider request failed", {
+        errorName: error?.name || "UnknownError",
+        errorMessage: redactDiagnostic(error?.message || error || "Unknown network error"),
+      });
+      throw new HttpsError("unavailable", "The email provider could not be reached.");
+    }
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      result = null;
+    }
     if (!response.ok) {
-      console.error("Email provider rejected send request", response.status);
+      const providerError = result && typeof result === "object" ? result : {};
+      console.error("Email provider rejected send request", {
+        status: response.status,
+        errorName: typeof providerError.name === "string" ? redactDiagnostic(providerError.name) : undefined,
+        errorCode: typeof providerError.statusCode === "number" ? providerError.statusCode : undefined,
+        errorMessage: typeof providerError.message === "string"
+          ? redactDiagnostic(providerError.message)
+          : "Provider returned no JSON error message.",
+      });
       throw new HttpsError("internal", "The email provider could not send this message.");
     }
-    const result = await response.json();
+    if (!result || typeof result.id !== "string") {
+      console.error("Email provider returned an invalid success response", { status: response.status });
+      throw new HttpsError("internal", "The email provider returned an invalid response.");
+    }
     return { id: result.id, to };
   },
 );

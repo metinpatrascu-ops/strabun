@@ -391,7 +391,13 @@
                     ? "Contul nu este autorizat să trimită e-mailuri."
                     : error.code === "functions/unauthenticated"
                         ? "Sesiunea a expirat. Conectează-te din nou."
-                        : error.message || "Trimiterea nu a reușit. Încearcă din nou.";
+                        : error.code === "functions/failed-precondition"
+                            ? "Serviciul de e-mail nu este configurat corect. Contactează administratorul."
+                            : error.code === "functions/unavailable"
+                                ? "Serviciul de e-mail nu este disponibil momentan. Încearcă din nou."
+                                : error.code === "functions/internal"
+                                    ? "Serverul nu a putut trimite e-mailul. Verifică setările serviciului și încearcă din nou."
+                                    : error.message || "Trimiterea nu a reușit. Încearcă din nou.";
                 setNotice(byId("sendNotice"), message);
             } finally {
                 sending = false;
