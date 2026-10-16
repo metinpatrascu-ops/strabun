@@ -56,8 +56,15 @@ function parseLogo(value) {
         throw new HttpsError("invalid-argument", "Sigla trebuie să aibă cel mult 300 KB.");
     }
 
+    const isValidImage = match[1] === "png"
+        ? decoded.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+        : match[1] === "jpeg"
+            ? decoded[0] === 0xff && decoded[1] === 0xd8 && decoded[2] === 0xff
+            : decoded.toString("ascii", 0, 4) === "RIFF" && decoded.toString("ascii", 8, 12) === "WEBP";
+    if (!isValidImage) throw new HttpsError("invalid-argument", "Conținutul fișierului siglă nu este valid.");
+
     const extension = match[1] === "jpeg" ? "jpg" : match[1];
-    return { content, filename: `sigla.${extension}` };
+    return { content, contentType: `image/${match[1]}`, filename: `sigla.${extension}` };
 }
 
 function createEmailHtml({ senderName, subject, message, theme, showStamp, hasLogo }) {
@@ -169,6 +176,7 @@ exports.sendEmail = onCall(
             payload.attachments = [{
                 filename: logo.filename,
                 content: logo.content,
+                content_type: logo.contentType,
                 content_id: "brand-logo",
             }];
         }
